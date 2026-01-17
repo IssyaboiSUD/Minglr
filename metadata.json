@@ -1,0 +1,7 @@
+{
+  "name": "MunichConnect - Social Activity Hub",
+  "description": "A vibrant social activities platform for Munich residents to explore local events, chat in groups, and share experiences in a Canva-style feed with AI-powered recommendations.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
