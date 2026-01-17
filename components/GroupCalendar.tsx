@@ -51,7 +51,7 @@ const GroupCalendar: React.FC = () => {
     <div className="p-6 pb-24 space-y-10 animate-in fade-in duration-700">
       <header className="flex flex-col gap-1">
         <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em]">Confirmed Trips</p>
-        <h2 className="text-4xl font-black text-slate-900 italic tracking-tighter uppercase">MY EVENTS</h2>
+        <h2 className="text-4xl font-black text-slate-900 italic tracking-tighter uppercase">My Events</h2>
       </header>
 
       {confirmedActivities.length === 0 ? (

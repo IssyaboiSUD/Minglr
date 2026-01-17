@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Mail, Lock, User, LogIn, UserPlus } from 'lucide-react';
@@ -68,7 +69,7 @@ const Login: React.FC = () => {
         <div className="bg-white rounded-[3rem] shadow-[0_30px_60px_rgba(0,0,0,0.08)] overflow-hidden border border-slate-100">
           <div className="bg-indigo-600 px-8 py-10 text-white text-center">
             <h2 className="text-3xl font-black italic tracking-tighter">
-              {isSignUp ? 'JOIN THE SQUAD' : 'WELCOME BACK'}
+              {isSignUp ? 'Join the Squad' : 'Welcome Back'}
             </h2>
             <p className="text-[10px] font-bold uppercase tracking-widest opacity-70 mt-2">
               {isSignUp ? 'Start your Munich adventure' : 'Dive back into the city'}

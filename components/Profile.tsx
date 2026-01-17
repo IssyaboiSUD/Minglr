@@ -46,13 +46,11 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
       validateImageFile(file);
       setUploading(true);
       
-      // Upload to Firebase Storage
       const downloadURL = await uploadProfilePicture(file, user.id);
       setAvatar(downloadURL);
       setAvatarUrl(downloadURL);
       setShowAvatarModal(false);
       
-      // Update profile immediately
       await db.updateUserProfile({ avatar: downloadURL });
       onUpdate();
       
@@ -108,7 +106,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
     <div className="p-6 pb-24 space-y-10 animate-in fade-in duration-500">
       <header className="flex flex-col gap-1">
         <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em]">Your Identity</p>
-        <h2 className="text-4xl font-black text-slate-900 italic tracking-tighter uppercase">MY PROFILE</h2>
+        <h2 className="text-4xl font-black text-slate-900 italic tracking-tighter uppercase leading-none">My Profile</h2>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -232,7 +230,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
                 <X size={24} />
               </button>
               <p className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-2">Change Profile Picture</p>
-              <h4 className="text-2xl font-black italic tracking-tighter">UPDATE AVATAR</h4>
+              <h4 className="text-2xl font-black italic tracking-tighter uppercase leading-none">Update Avatar</h4>
             </div>
             <div className="p-8 space-y-6">
               {/* Upload File Option */}

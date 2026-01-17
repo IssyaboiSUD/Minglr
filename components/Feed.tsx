@@ -54,8 +54,8 @@ const Feed: React.FC<FeedProps> = ({ onWishlistUpdate }) => {
     <div className="p-6 pb-24 animate-in fade-in duration-1000">
       <div className="flex items-center justify-between mb-10">
         <div>
-          <h2 className="text-4xl font-black text-slate-900 italic tracking-tighter">COMMUNITY</h2>
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">Live Firebase Feed</p>
+          <h2 className="text-4xl font-black text-slate-900 italic tracking-tighter uppercase leading-none">Community</h2>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mt-1">Live Feed</p>
         </div>
         <button 
           onClick={() => setShowCreateModal(true)}
@@ -165,7 +165,7 @@ const CreatePostModal: React.FC<{ onClose: () => void, activities: Activity[], o
         <div className="bg-indigo-600 p-8 text-white relative">
           <button onClick={onClose} className="absolute top-6 right-6 p-2 hover:bg-white/10 rounded-full transition-colors"><X size={24} /></button>
           <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-80 mb-2">Share Your Story</p>
-          <h4 className="text-3xl font-black italic tracking-tighter uppercase">NEW COMMUNITY POST</h4>
+          <h4 className="text-3xl font-black italic tracking-tighter uppercase">New Community Post</h4>
         </div>
 
         <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto">

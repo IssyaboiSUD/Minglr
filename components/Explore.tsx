@@ -413,7 +413,7 @@ const Explore: React.FC<ExploreProps> = ({ onWishlistUpdate }) => {
       <header className="flex items-end justify-between">
         <div>
           <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] mb-1">Explore Munich</p>
-          <h2 className="text-4xl font-black text-slate-900 italic tracking-tighter uppercase">WHAT'S NEXT?</h2>
+          <h2 className="text-4xl font-black text-slate-900 italic tracking-tighter uppercase">What's Next?</h2>
         </div>
         <div className="flex gap-2">
           <button 

@@ -1,7 +1,10 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { onAuthStateChange, getUserProfile, signIn, signUp, logout, signInWithGoogle, AuthUser } from '../services/authService';
+import { onAuthStateChange, signIn, signUp, logout, signInWithGoogle, AuthUser } from '../services/authService';
 import { UserProfile } from '../types';
 import { db } from '../services/dbService';
+import { doc, onSnapshot, getDoc, setDoc } from 'firebase/firestore';
+import { firestore, auth } from '../services/firebaseConfig';
 
 interface AuthContextType {
   authUser: AuthUser | null;
@@ -33,26 +36,53 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChange(async (user) => {
+    let unsubscribeProfile: (() => void) | undefined;
+
+    const unsubscribeAuth = onAuthStateChange(async (user) => {
       setAuthUser(user);
       
       if (user) {
-        // Load user profile from Firestore
-        const profile = await getUserProfile(user.uid);
-        setUserProfile(profile);
-        // Update dbService with current user
-        if (profile) {
-          db.setCurrentUser(profile);
+        // 1. Setup real-time listener for the user profile document
+        const userDocRef = doc(firestore, 'users', user.uid);
+        
+        // Ensure doc exists first
+        const docSnap = await getDoc(userDocRef);
+        if (!docSnap.exists()) {
+          const defaultProfile: UserProfile = {
+            id: user.uid,
+            name: user.displayName || user.email?.split('@')[0] || 'New User',
+            avatar: user.photoURL || `https://i.pravatar.cc/150?u=${user.uid}`,
+            preferences: [],
+            wishlist: [],
+            friends: [],
+            sentRequests: []
+          };
+          await setDoc(userDocRef, defaultProfile);
         }
+
+        unsubscribeProfile = onSnapshot(userDocRef, (doc) => {
+          if (doc.exists()) {
+            const profile = { id: doc.id, ...doc.data() } as UserProfile;
+            setUserProfile(profile);
+            db.setCurrentUser(profile);
+            setLoading(false);
+          }
+        }, (error) => {
+          console.error("Profile snapshot error:", error);
+          setLoading(false);
+        });
       } else {
+        if (unsubscribeProfile) unsubscribeProfile();
         setUserProfile(null);
         db.setCurrentUser(null);
+        setLoading(false);
       }
-      
-      setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeProfile) unsubscribeProfile();
+    };
   }, []);
 
   const handleSignIn = async (email: string, password: string) => {
@@ -69,7 +99,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const handleSignOut = async () => {
     await logout();
-    setUserProfile(null);
   };
 
   const value: AuthContextType = {

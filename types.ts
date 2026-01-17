@@ -16,6 +16,7 @@ export interface UserProfile {
   preferences: string[];
   wishlist: string[]; // activity IDs
   friends: string[]; // user IDs
+  sentRequests: string[]; // user IDs to whom a request was sent
 }
 
 export interface Message {

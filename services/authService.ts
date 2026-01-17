@@ -1,3 +1,4 @@
+
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword,
@@ -44,7 +45,8 @@ export const getUserProfile = async (uid: string): Promise<UserProfile | null> =
         avatar: data.avatar || data.photoURL || `https://i.pravatar.cc/150?u=${uid}`,
         preferences: data.preferences || [],
         wishlist: data.wishlist || [],
-        friends: data.friends || []
+        friends: data.friends || [],
+        sentRequests: data.sentRequests || []
       } as UserProfile;
     }
     
@@ -57,7 +59,8 @@ export const getUserProfile = async (uid: string): Promise<UserProfile | null> =
       avatar: currentAuthUser?.photoURL || `https://i.pravatar.cc/150?u=${uid}`,
       preferences: [],
       wishlist: [],
-      friends: []
+      friends: [],
+      sentRequests: []
     };
     
     await setDoc(userDoc, defaultProfile);
@@ -95,7 +98,8 @@ export const signUp = async (email: string, password: string, displayName?: stri
       avatar: `https://i.pravatar.cc/150?u=${user.uid}`,
       preferences: [],
       wishlist: [],
-      friends: []
+      friends: [],
+      sentRequests: []
     };
     
     await setDoc(doc(firestore, 'users', user.uid), userProfile);

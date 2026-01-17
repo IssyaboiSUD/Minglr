@@ -79,7 +79,7 @@ const Wishlist: React.FC<WishlistProps> = ({ onWishlistUpdate }) => {
     <div className="p-6 pb-24 space-y-10 animate-in fade-in duration-700">
       <header className="flex flex-col gap-1">
         <p className="text-[10px] font-black text-rose-500 uppercase tracking-[0.3em]">Your Saved Gems</p>
-        <h2 className="text-4xl font-black text-slate-900 italic tracking-tighter uppercase">THE WISHLIST</h2>
+        <h2 className="text-4xl font-black text-slate-900 italic tracking-tighter uppercase">The Wishlist</h2>
       </header>
 
       {wishlistActivities.length === 0 ? (
