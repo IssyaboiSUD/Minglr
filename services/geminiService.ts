@@ -2,13 +2,20 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Activity, UserProfile } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Fallback to empty string to prevent constructor crash
+const apiKey = process.env.API_KEY || "";
+const ai = new GoogleGenAI({ apiKey });
 
 /**
  * AI optimizes the order and selection of activities already in the database
  * based on the user's explicit preferences and wishlist history.
  */
 export async function getPersonalizedRanking(user: UserProfile, allActivities: Activity[]): Promise<string[]> {
+  if (!apiKey) {
+    console.warn("Gemini API Key is missing. Skipping personalized ranking.");
+    return allActivities.slice(0, 4).map(a => a.id);
+  }
+
   try {
     const prompt = `
       User Profile: Likes ${user.preferences.join(", ")}, Wishlist: ${user.wishlist.join(", ")}.
