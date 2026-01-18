@@ -48,14 +48,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Ensure doc exists first
         const docSnap = await getDoc(userDocRef);
         if (!docSnap.exists()) {
+          // Fixed: Use 'following' and 'followers' instead of 'friends' and 'sentRequests' to match the UserProfile type definition.
           const defaultProfile: UserProfile = {
             id: user.uid,
             name: user.displayName || user.email?.split('@')[0] || 'New User',
             avatar: user.photoURL || `https://i.pravatar.cc/150?u=${user.uid}`,
             preferences: [],
             wishlist: [],
-            friends: [],
-            sentRequests: []
+            following: [],
+            followers: []
           };
           await setDoc(userDocRef, defaultProfile);
         }

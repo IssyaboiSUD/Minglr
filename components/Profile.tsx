@@ -143,7 +143,8 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
               </div>
               <div className="bg-slate-50 p-4 rounded-3xl">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Squad</p>
-                <p className="text-xl font-black text-slate-900">{user.friends.length}</p>
+                {/* Fixed: Changed 'friends' to 'following' to match UserProfile type definition. */}
+                <p className="text-xl font-black text-slate-900">{user.following.length}</p>
               </div>
             </div>
           </div>

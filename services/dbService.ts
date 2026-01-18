@@ -44,7 +44,6 @@ class FirebaseDB {
       const snapshot = await getDocs(query(activitiesCol, limit(1)));
       if (snapshot.empty) {
         for (const activity of INITIAL_ACTIVITIES) {
-          // Write both variants to be safe
           const activityData = {
             ...activity,
             photoUrl: activity.imageUrl,
@@ -67,14 +66,20 @@ class FirebaseDB {
 
       return snapshot.docs.map(doc => {
         const data = doc.data() as any;
-        // Normalize: ensure imageUrl exists regardless of whether DB uses photoUrl or imageUrl
         const imageUrl = data.imageUrl || data.photoUrl || INITIAL_ACTIVITIES.find(a => a.id === doc.id)?.imageUrl || '';
         
+        // Priority for category: 1. Firestore 'category' field, 2. Firestore 'type' field, 3. Mock data fallback, 4. Default 'Culture'
+        let category = data.category || data.type;
+        if (!category) {
+          const mock = INITIAL_ACTIVITIES.find(a => a.id === doc.id);
+          category = mock ? mock.category : 'Culture';
+        }
+
         return {
           ...data,
           id: doc.id,
           imageUrl,
-          category: data.category || 'Culture'
+          category: category
         } as Activity;
       });
     } catch (e: any) {
@@ -83,7 +88,7 @@ class FirebaseDB {
     }
   }
 
-  // --- NEW CLEAN FRIENDS SYSTEM ---
+  // --- FOLLOWERS / FOLLOWING SYSTEM ---
 
   async searchUsers(searchTerm: string): Promise<UserProfile[]> {
     const userId = this.getCurrentUserId();
@@ -97,8 +102,8 @@ class FirebaseDB {
       return snapshot.docs
         .map(doc => ({ 
           id: doc.id, 
-          friends: [],
-          sentRequests: [],
+          following: [],
+          followers: [],
           ...(doc.data() as any) 
         } as UserProfile))
         .filter(u => u.id !== userId);
@@ -108,93 +113,83 @@ class FirebaseDB {
     }
   }
 
-  async sendFriendRequest(targetUserId: string) {
+  async followUser(targetUserId: string) {
     const userId = this.getCurrentUserId();
     if (!userId || !targetUserId || userId === targetUserId) return;
 
     try {
-      await updateDoc(doc(firestore, 'users', userId), {
-        sentRequests: arrayUnion(targetUserId)
-      });
+      const batch = writeBatch(firestore);
+      const myRef = doc(firestore, 'users', userId);
+      const targetRef = doc(firestore, 'users', targetUserId);
+
+      batch.update(myRef, { following: arrayUnion(targetUserId) });
+      batch.update(targetRef, { followers: arrayUnion(userId) });
 
       await addDoc(collection(firestore, 'notifications'), {
         userId: targetUserId,
         userName: this.currentUser?.name || 'Someone',
-        type: 'friend_request',
+        type: 'follow',
         relatedId: userId,
         timestamp: serverTimestamp(),
         read: false
       });
-    } catch (error) {
-      console.error("Error sending request:", error);
-    }
-  }
-
-  async acceptFriendRequest(notificationId: string, requesterId: string) {
-    const userId = this.getCurrentUserId();
-    if (!userId || !requesterId) return;
-
-    try {
-      const batch = writeBatch(firestore);
-      const myRef = doc(firestore, 'users', userId);
-      const requesterRef = doc(firestore, 'users', requesterId);
-      const notifRef = doc(firestore, 'notifications', notificationId);
-
-      batch.update(myRef, { 
-        friends: arrayUnion(requesterId),
-        sentRequests: arrayRemove(requesterId) 
-      });
-      batch.update(requesterRef, { 
-        friends: arrayUnion(userId),
-        sentRequests: arrayRemove(userId)
-      });
-
-      batch.update(notifRef, { read: true });
 
       await batch.commit();
     } catch (error) {
-      console.error("Error accepting request:", error);
+      console.error("Error following user:", error);
     }
   }
 
-  async ignoreFriendRequest(notificationId: string) {
-    try {
-      await updateDoc(doc(firestore, 'notifications', notificationId), { read: true });
-    } catch (error) {
-      console.error("Error ignoring request:", error);
-    }
-  }
-
-  async removeFriend(friendId: string) {
+  async unfollowUser(targetUserId: string) {
     const userId = this.getCurrentUserId();
-    if (!userId || !friendId) return;
+    if (!userId || !targetUserId) return;
 
     try {
       const batch = writeBatch(firestore);
-      batch.update(doc(firestore, 'users', userId), { friends: arrayRemove(friendId) });
-      batch.update(doc(firestore, 'users', friendId), { friends: arrayRemove(userId) });
+      batch.update(doc(firestore, 'users', userId), { following: arrayRemove(targetUserId) });
+      batch.update(doc(firestore, 'users', targetUserId), { followers: arrayRemove(userId) });
       await batch.commit();
     } catch (error) {
-      console.error("Error removing friend:", error);
+      console.error("Error unfollowing user:", error);
     }
   }
 
-  async getFriendsList(): Promise<UserProfile[]> {
+  async getFollowingList(): Promise<UserProfile[]> {
     const user = this.currentUser;
-    if (!user || !user.friends || user.friends.length === 0) return [];
+    if (!user || !user.following || user.following.length === 0) return [];
 
     try {
       const usersCol = collection(firestore, 'users');
-      const q = query(usersCol, where(documentId(), 'in', user.friends.slice(0, 30)));
+      const q = query(usersCol, where(documentId(), 'in', user.following.slice(0, 30)));
       const snapshot = await getDocs(q);
       return snapshot.docs.map(doc => ({ 
         id: doc.id, 
-        friends: [],
-        sentRequests: [],
+        following: [],
+        followers: [],
         ...(doc.data() as any) 
       } as UserProfile));
     } catch (error) {
-      console.error("Error fetching friends:", error);
+      console.error("Error fetching following:", error);
+      return [];
+    }
+  }
+
+  async getFollowersList(): Promise<UserProfile[]> {
+    const user = this.currentUser;
+    if (!user || !user.followers || user.followers.length === 0) return [];
+
+    try {
+      const usersCol = collection(firestore, 'users');
+      const q = query(usersCol, where(documentId(), 'in', user.followers.slice(0, 30)));
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({ 
+        id: doc.id, 
+        following: [],
+        followers: [],
+        ...(doc.data() as any) 
+      } as UserProfile));
+    } catch (error) {
+      console.error("Error fetching followers:", error);
       return [];
     }
   }

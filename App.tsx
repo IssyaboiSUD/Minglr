@@ -64,13 +64,10 @@ const AppContent: React.FC = () => {
     return <Login />;
   }
 
-  // Hide nav and header if in mobile chat view for full-screen feel
-  const isChatTab = activeTab === 'chat';
-
   return (
     <div className="flex flex-col h-screen max-w-5xl mx-auto bg-white md:shadow-2xl relative overflow-hidden">
-      {/* Header - Hidden on mobile chat to save space */}
-      <header className={`px-6 py-4 items-center justify-between border-b bg-white/80 backdrop-blur-md z-40 shrink-0 ${isChatTab ? 'hidden md:flex' : 'flex'}`}>
+      {/* Header - Always visible for branding and notification access */}
+      <header className="px-6 py-4 flex items-center justify-between border-b bg-white/80 backdrop-blur-md z-40 shrink-0">
         <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setActiveTab('explore')}>
           <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl overflow-hidden shadow-lg shadow-indigo-100 group-hover:scale-105 transition-transform bg-slate-50 flex items-center justify-center border border-slate-100">
             <img 
@@ -133,7 +130,7 @@ const AppContent: React.FC = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-hidden bg-slate-50/30 relative">
-        <div className={`h-full ${isChatTab ? 'pb-0' : 'pb-28 md:pb-32'} overflow-y-auto`}>
+        <div className="h-full pb-32 md:pb-36 overflow-y-auto">
           {activeTab === 'explore' && <Explore onWishlistUpdate={refreshUser} />}
           {activeTab === 'chat' && <Chat />}
           {activeTab === 'feed' && <Feed onWishlistUpdate={refreshUser} />}
@@ -144,42 +141,39 @@ const AppContent: React.FC = () => {
         </div>
       </main>
 
-      {/* Bottom Navigation - Hidden on mobile chat to avoid overlapping input */}
-      <nav className={`
-        fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-md bg-slate-900/95 backdrop-blur-xl rounded-[2.5rem] p-1.5 flex justify-around items-center shadow-[0_20px_50px_rgba(0,0,0,0.3)] z-[100] border border-white/10 transition-transform duration-300
-        ${isChatTab ? 'hidden md:flex' : 'flex'}
-      `}>
+      {/* Bottom Navigation - Persistent across all tabs */}
+      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-md bg-slate-900/95 backdrop-blur-xl rounded-[2.5rem] p-1.5 flex justify-around items-center shadow-[0_20px_50px_rgba(0,0,0,0.3)] z-[100] border border-white/10">
         <NavButton 
           active={activeTab === 'explore'} 
           onClick={() => setActiveTab('explore')} 
-          icon={<Compass />} 
+          icon={<Compass size={20} />} 
           label="Explore"
         />
         <NavButton 
           active={activeTab === 'feed'} 
           onClick={() => setActiveTab('feed')} 
-          icon={<LayoutGrid />} 
+          icon={<LayoutGrid size={20} />} 
           label="Feed"
           hasNotification={hasNotifications('like') || hasNotifications('comment')}
         />
         <NavButton 
           active={activeTab === 'chat'} 
           onClick={() => setActiveTab('chat')} 
-          icon={<MessageSquare />} 
+          icon={<MessageSquare size={20} />} 
           label="Chat"
           hasNotification={hasNotifications('message')}
         />
         <NavButton 
           active={activeTab === 'friends'} 
           onClick={() => setActiveTab('friends')} 
-          icon={<Users />} 
+          icon={<Users size={20} />} 
           label="Squad"
           hasNotification={hasNotifications('friend_request')}
         />
         <NavButton 
           active={activeTab === 'calendar'} 
           onClick={() => setActiveTab('calendar')} 
-          icon={<Calendar />} 
+          icon={<Calendar size={20} />} 
           label="Events"
           hasNotification={hasNotifications('event')}
         />
@@ -211,17 +205,17 @@ interface NavButtonProps {
 const NavButton: React.FC<NavButtonProps> = ({ active, onClick, icon, label, hasNotification = false }) => (
   <button 
     onClick={onClick}
-    className={`relative flex flex-col items-center gap-1 transition-all duration-300 px-3.5 py-2.5 rounded-[1.8rem] ${
-      active ? 'text-white bg-indigo-600 shadow-lg shadow-indigo-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'
+    className={`relative flex flex-col items-center gap-1 transition-all duration-300 px-3 md:px-4 py-2.5 rounded-[1.8rem] ${
+      active ? 'text-white bg-indigo-600 shadow-lg shadow-indigo-500/20' : 'text-slate-400 hover:text-white'
     }`}
   >
-    <div className="relative">
-      {React.cloneElement(icon as React.ReactElement<any>, { size: 20, strokeWidth: active ? 2.5 : 2 })}
-      {hasNotification && !active && (
-        <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-rose-400 rounded-full border-2 border-slate-900 shadow-[0_0_10px_rgba(244,63,94,0.8)] animate-pulse"></span>
-      )}
-    </div>
-    <span className={`text-[7px] font-black uppercase tracking-[0.15em] ${active ? 'opacity-100' : 'opacity-60'}`}>{label}</span>
+    {icon}
+    <span className={`text-[9px] font-black uppercase tracking-tighter ${active ? 'opacity-100' : 'opacity-0 scale-90 h-0'} transition-all`}>
+      {label}
+    </span>
+    {hasNotification && (
+      <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-slate-900 animate-pulse"></span>
+    )}
   </button>
 );
 

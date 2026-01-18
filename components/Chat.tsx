@@ -14,13 +14,10 @@ import {
   MessageCircle, 
   Navigation, 
   MoreVertical,
-  Camera,
   LogOut
 } from 'lucide-react';
-import { useLocation } from '../contexts/LocationContext';
 import { parseLocation } from '../services/locationService';
 
-// Sanitizer for description text
 const sanitizeDescription = (text: string) => {
   if (!text) return "";
   return text
@@ -80,14 +77,13 @@ const Chat: React.FC = () => {
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [activities, setActivities] = useState<Activity[]>([]);
-  const [friends, setFriends] = useState<UserProfile[]>([]);
-  const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
+  const [following, setFollowing] = useState<UserProfile[]>([]);
+  const [selectedFollowing, setSelectedFollowing] = useState<string[]>([]);
   const [groupName, setGroupName] = useState('');
   const [selectedActivityForModal, setSelectedActivityForModal] = useState<Activity | null>(null);
   const [pollQuestion, setPollQuestion] = useState('');
   const [pollOptions, setPollOptions] = useState(['', '']);
   
-  // Mobile View Management
   const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -96,7 +92,7 @@ const Chat: React.FC = () => {
 
   useEffect(() => {
     db.getActivities().then(setActivities);
-    db.getFriendsList().then(setFriends);
+    db.getFollowingList().then(setFollowing);
     const unsubGroups = db.subscribeToGroups(setGroups);
     return () => unsubGroups();
   }, []);
@@ -171,22 +167,22 @@ const Chat: React.FC = () => {
   };
 
   const handleCreateGroup = async () => {
-    if (!groupName.trim() || selectedFriends.length === 0) return;
-    await db.createGroup(groupName, selectedFriends);
+    if (!groupName.trim() || selectedFollowing.length === 0) return;
+    await db.createGroup(groupName, selectedFollowing);
     setShowCreateGroup(false);
     setGroupName('');
-    setSelectedFriends([]);
+    setSelectedFollowing([]);
   };
 
   return (
     <div className="flex h-full bg-white md:bg-[#F8FAFC] overflow-hidden relative">
-      {/* SIDEBAR (List of Squads) */}
+      {/* SIDEBAR */}
       <div className={`
         flex-col border-r bg-white w-full md:w-80 lg:w-96
         ${mobileView === 'chat' ? 'hidden md:flex' : 'flex'}
       `}>
         <div className="p-6 border-b flex items-center justify-between bg-white sticky top-0 z-10">
-          <h3 className="font-black italic tracking-tighter text-slate-900 text-2xl uppercase">Chats</h3>
+          <h3 className="font-black italic tracking-tighter text-slate-900 text-2xl uppercase leading-none">Chats</h3>
           <button 
             onClick={() => setShowCreateGroup(true)}
             className="w-10 h-10 bg-indigo-600 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-700 transition-all active:scale-95"
@@ -196,7 +192,6 @@ const Chat: React.FC = () => {
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar">
-          {/* Global Channel */}
           <button 
             onClick={() => selectGroup(null)} 
             className={`w-full flex items-center gap-4 p-5 transition-all border-b border-slate-50 hover:bg-slate-50 ${selectedGroup === null ? 'bg-indigo-50/50' : ''}`}
@@ -207,13 +202,12 @@ const Chat: React.FC = () => {
             <div className="flex-1 text-left">
               <div className="flex justify-between items-baseline mb-1">
                 <p className="font-black text-slate-900 text-sm">Munich Global</p>
-                <span className="text-[10px] text-slate-400 font-bold">LIVE</span>
+                <span className="text-[10px] text-slate-400 font-bold uppercase">Public</span>
               </div>
               <p className="text-xs text-slate-500 font-medium truncate">Connect with everyone in Munich</p>
             </div>
           </button>
 
-          {/* User Groups */}
           {groups.map(group => (
             <button 
               key={group.id} 
@@ -226,7 +220,7 @@ const Chat: React.FC = () => {
               <div className="flex-1 text-left min-w-0">
                 <div className="flex justify-between items-baseline mb-1">
                   <p className="font-black text-slate-900 text-sm truncate uppercase tracking-tight">{group.name}</p>
-                  <span className="text-[10px] text-slate-400 font-bold">12:00</span>
+                  <span className="text-[10px] text-slate-400 font-bold">Squad</span>
                 </div>
                 <p className="text-xs text-slate-400 font-medium truncate italic">Group Chat</p>
               </div>
@@ -239,7 +233,7 @@ const Chat: React.FC = () => {
                 <Users size={32} />
               </div>
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest leading-loose">
-                No custom squads yet.<br/>Start one with your friends!
+                No custom squads yet.<br/>Start one with the people you follow!
               </p>
             </div>
           )}
@@ -251,8 +245,6 @@ const Chat: React.FC = () => {
         flex-1 flex flex-col h-full bg-slate-50 relative
         ${mobileView === 'list' ? 'hidden md:flex' : 'flex'}
       `}>
-        
-        {/* Chat Header */}
         <div className="bg-white border-b px-4 py-3 flex items-center justify-between shadow-sm z-20 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             <button 
@@ -297,7 +289,6 @@ const Chat: React.FC = () => {
           </div>
         </div>
 
-        {/* Messages Area */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 md:p-8 space-y-4 custom-scrollbar">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center p-10 opacity-40">
@@ -315,18 +306,15 @@ const Chat: React.FC = () => {
               return (
                 <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[85%] md:max-w-[70%] ${isMe ? 'items-end' : 'items-start'} flex flex-col`}>
-                    
                     {!isMe && (
                       <span className="text-[10px] font-black text-slate-400 mb-1 ml-2 uppercase tracking-tighter">
                         {msg.userName}
                       </span>
                     )}
-                    
                     <div className={`
                       relative p-4 rounded-[1.8rem] shadow-sm text-sm font-medium
                       ${isMe ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white text-slate-800 rounded-tl-none border border-slate-100'}
                     `}>
-                      {/* Shared Activity Card */}
                       {activity && (
                         <div 
                           onClick={() => setSelectedActivityForModal(activity)}
@@ -341,12 +329,7 @@ const Chat: React.FC = () => {
                           </div>
                         </div>
                       )}
-
-                      <div className="leading-relaxed">
-                        {msg.text}
-                      </div>
-                      
-                      {/* Poll View */}
+                      <div className="leading-relaxed">{msg.text}</div>
                       {msg.poll && (
                         <div className={`mt-4 space-y-2 border-t pt-4 ${isMe ? 'border-white/10' : 'border-slate-100'}`}>
                           <h4 className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 mb-2 ${isMe ? 'text-white' : 'text-slate-900'}`}>
@@ -375,7 +358,6 @@ const Chat: React.FC = () => {
                           })}
                         </div>
                       )}
-
                       <div className="flex justify-end mt-2">
                         <span className={`text-[8px] font-black uppercase tracking-widest ${isMe ? 'text-white/40' : 'text-slate-300'}`}>
                           {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -389,8 +371,7 @@ const Chat: React.FC = () => {
           )}
         </div>
 
-        {/* Input Bar - Added padding to avoid global nav bar blocking */}
-        <div className="bg-white p-4 md:p-6 md:pb-28 border-t shadow-[0_-10px_25px_rgba(0,0,0,0.02)] shrink-0">
+        <div className="bg-white p-4 md:p-6 pb-28 md:pb-8 border-t shadow-[0_-10px_25px_rgba(0,0,0,0.02)] shrink-0">
           <div className="max-w-4xl mx-auto flex items-center gap-3">
             <button 
               onClick={() => setShowPollModal(true)} 
@@ -422,12 +403,10 @@ const Chat: React.FC = () => {
         </div>
       </div>
 
-      {/* Shared Activity Modal */}
       {selectedActivityForModal && (
         <ActivityDetailModal activity={selectedActivityForModal} onClose={() => setSelectedActivityForModal(null)} />
       )}
 
-      {/* Poll Creation Modal */}
       {showPollModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[200] flex items-center justify-center p-4">
           <div className="bg-white rounded-[2.5rem] w-full max-w-md overflow-hidden shadow-2xl">
@@ -461,7 +440,6 @@ const Chat: React.FC = () => {
         </div>
       )}
 
-      {/* Group Creation Modal */}
       {showCreateGroup && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[200] flex items-center justify-center p-4">
           <div className="bg-white rounded-[3rem] w-full max-w-md overflow-hidden shadow-2xl">
@@ -475,26 +453,26 @@ const Chat: React.FC = () => {
                 <input value={groupName} onChange={e => setGroupName(e.target.value)} placeholder="e.g., Saturday Surfers" className="w-full bg-slate-50 rounded-2xl px-6 py-4 outline-none font-bold border border-slate-100 focus:ring-4 focus:ring-indigo-50" />
               </div>
               <div className="space-y-4">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Invite Friends</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Invite People You Follow</label>
                 <div className="max-h-64 overflow-y-auto space-y-2 custom-scrollbar pr-2">
-                  {friends.map(friend => (
+                  {following.map(person => (
                     <button 
-                      key={friend.id} 
-                      onClick={() => setSelectedFriends(prev => prev.includes(friend.id) ? prev.filter(f => f !== friend.id) : [...prev, friend.id])} 
-                      className={`w-full flex items-center justify-between p-4 rounded-2xl transition-all ${selectedFriends.includes(friend.id) ? 'bg-indigo-50 border-indigo-200' : 'bg-slate-50 border-transparent'} border group hover:bg-white hover:border-indigo-100 hover:shadow-md`}
+                      key={person.id} 
+                      onClick={() => setSelectedFollowing(prev => prev.includes(person.id) ? prev.filter(f => f !== person.id) : [...prev, person.id])} 
+                      className={`w-full flex items-center justify-between p-4 rounded-2xl transition-all ${selectedFollowing.includes(person.id) ? 'bg-indigo-50 border-indigo-200' : 'bg-slate-50 border-transparent'} border group hover:bg-white hover:border-indigo-100 hover:shadow-md`}
                     >
                       <div className="flex items-center gap-3">
-                        <img src={friend.avatar} className="w-10 h-10 rounded-xl object-cover shadow-sm" alt="" />
-                        <span className="text-sm font-bold text-slate-700">{friend.name}</span>
+                        <img src={person.avatar} className="w-10 h-10 rounded-xl object-cover shadow-sm" alt="" />
+                        <span className="text-sm font-bold text-slate-700">{person.name}</span>
                       </div>
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${selectedFriends.includes(friend.id) ? 'bg-indigo-600' : 'bg-slate-200'}`}>
-                        {selectedFriends.includes(friend.id) && <Check size={14} className="text-white" />}
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${selectedFollowing.includes(person.id) ? 'bg-indigo-600' : 'bg-slate-200'}`}>
+                        {selectedFollowing.includes(person.id) && <Check size={14} className="text-white" />}
                       </div>
                     </button>
                   ))}
-                  {friends.length === 0 && (
+                  {following.length === 0 && (
                     <div className="p-10 text-center bg-slate-50 rounded-3xl border-2 border-dashed">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No friends to invite yet!</p>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-loose">Follow people to add them to squads!</p>
                     </div>
                   )}
                 </div>

@@ -15,8 +15,8 @@ export interface UserProfile {
   avatar: string;
   preferences: string[];
   wishlist: string[]; // activity IDs
-  friends: string[]; // user IDs
-  sentRequests: string[]; // user IDs to whom a request was sent
+  following: string[]; // user IDs
+  followers: string[]; // user IDs
 }
 
 export interface Message {
@@ -37,7 +37,7 @@ export interface Notification {
   id: string;
   userId: string;
   userName: string;
-  type: 'like' | 'comment' | 'message' | 'friend_request' | 'event';
+  type: 'like' | 'comment' | 'message' | 'follow' | 'event';
   text?: string;
   timestamp: Date;
   read: boolean;

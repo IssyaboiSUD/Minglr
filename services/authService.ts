@@ -39,28 +39,30 @@ export const getUserProfile = async (uid: string): Promise<UserProfile | null> =
     
     if (snap.exists()) {
       const data = snap.data() as any;
+      // Fixed: Explicitly map following and followers and remove non-existent friends/sentRequests fields to match UserProfile type.
       return {
         id: uid,
         name: data.name || data.displayName || 'User',
         avatar: data.avatar || data.photoURL || `https://i.pravatar.cc/150?u=${uid}`,
         preferences: data.preferences || [],
         wishlist: data.wishlist || [],
-        friends: data.friends || [],
-        sentRequests: data.sentRequests || []
+        following: data.following || [],
+        followers: data.followers || []
       } as UserProfile;
     }
     
     // Check if the current firebase user has info we can use for the default profile
     const currentAuthUser = auth.currentUser;
     
+    // Fixed: Initialize following and followers instead of non-existent friends and sentRequests properties.
     const defaultProfile: UserProfile = {
       id: uid,
       name: currentAuthUser?.displayName || 'New User',
       avatar: currentAuthUser?.photoURL || `https://i.pravatar.cc/150?u=${uid}`,
       preferences: [],
       wishlist: [],
-      friends: [],
-      sentRequests: []
+      following: [],
+      followers: []
     };
     
     await setDoc(userDoc, defaultProfile);
@@ -92,14 +94,15 @@ export const signUp = async (email: string, password: string, displayName?: stri
       await updateFirebaseProfile(user, { displayName });
     }
     
+    // Fixed: Ensure the initial user profile object strictly follows the UserProfile interface by using following/followers.
     const userProfile: UserProfile = {
       id: user.uid,
       name: displayName || email.split('@')[0],
       avatar: `https://i.pravatar.cc/150?u=${user.uid}`,
       preferences: [],
       wishlist: [],
-      friends: [],
-      sentRequests: []
+      following: [],
+      followers: []
     };
     
     await setDoc(doc(firestore, 'users', user.uid), userProfile);
