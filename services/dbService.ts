@@ -44,18 +44,41 @@ class FirebaseDB {
       const snapshot = await getDocs(query(activitiesCol, limit(1)));
       if (snapshot.empty) {
         for (const activity of INITIAL_ACTIVITIES) {
-          await setDoc(doc(firestore, 'activities', activity.id), activity);
+          // Write both variants to be safe
+          const activityData = {
+            ...activity,
+            photoUrl: activity.imageUrl,
+            imageUrl: activity.imageUrl
+          };
+          await setDoc(doc(firestore, 'activities', activity.id), activityData);
         }
       }
-    } catch (e: any) {}
+    } catch (e: any) {
+      console.error("Seeding error:", e);
+    }
   }
 
   async getActivities(): Promise<Activity[]> {
     try {
       const activitiesCol = collection(firestore, 'activities');
       const snapshot = await getDocs(activitiesCol);
-      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Activity));
+      
+      if (snapshot.empty) return INITIAL_ACTIVITIES;
+
+      return snapshot.docs.map(doc => {
+        const data = doc.data() as any;
+        // Normalize: ensure imageUrl exists regardless of whether DB uses photoUrl or imageUrl
+        const imageUrl = data.imageUrl || data.photoUrl || INITIAL_ACTIVITIES.find(a => a.id === doc.id)?.imageUrl || '';
+        
+        return {
+          ...data,
+          id: doc.id,
+          imageUrl,
+          category: data.category || 'Culture'
+        } as Activity;
+      });
     } catch (e: any) {
+      console.error("Fetch activities error:", e);
       return INITIAL_ACTIVITIES;
     }
   }
@@ -68,12 +91,16 @@ class FirebaseDB {
     
     try {
       const usersCol = collection(firestore, 'users');
-      // Simple prefix search
       const q = query(usersCol, where('name', '>=', searchTerm), where('name', '<=', searchTerm + '\uf8ff'));
       const snapshot = await getDocs(q);
       
       return snapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() } as UserProfile))
+        .map(doc => ({ 
+          id: doc.id, 
+          friends: [],
+          sentRequests: [],
+          ...(doc.data() as any) 
+        } as UserProfile))
         .filter(u => u.id !== userId);
     } catch (error) {
       console.error("Search error:", error);
@@ -86,17 +113,15 @@ class FirebaseDB {
     if (!userId || !targetUserId || userId === targetUserId) return;
 
     try {
-      // 1. Mark as sent in sender's profile
       await updateDoc(doc(firestore, 'users', userId), {
         sentRequests: arrayUnion(targetUserId)
       });
 
-      // 2. Create notification for the receiver
       await addDoc(collection(firestore, 'notifications'), {
         userId: targetUserId,
         userName: this.currentUser?.name || 'Someone',
         type: 'friend_request',
-        relatedId: userId, // The person who SENT the request
+        relatedId: userId,
         timestamp: serverTimestamp(),
         read: false
       });
@@ -115,14 +140,15 @@ class FirebaseDB {
       const requesterRef = doc(firestore, 'users', requesterId);
       const notifRef = doc(firestore, 'notifications', notificationId);
 
-      // Add to both friends lists
-      batch.update(myRef, { friends: arrayUnion(requesterId) });
+      batch.update(myRef, { 
+        friends: arrayUnion(requesterId),
+        sentRequests: arrayRemove(requesterId) 
+      });
       batch.update(requesterRef, { 
         friends: arrayUnion(userId),
-        sentRequests: arrayRemove(userId) // Clean up their sent request list
+        sentRequests: arrayRemove(userId)
       });
 
-      // Mark notification as read
       batch.update(notifRef, { read: true });
 
       await batch.commit();
@@ -159,10 +185,14 @@ class FirebaseDB {
 
     try {
       const usersCol = collection(firestore, 'users');
-      // Firestore 'in' query limit is 30
       const q = query(usersCol, where(documentId(), 'in', user.friends.slice(0, 30)));
       const snapshot = await getDocs(q);
-      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
+      return snapshot.docs.map(doc => ({ 
+        id: doc.id, 
+        friends: [],
+        sentRequests: [],
+        ...(doc.data() as any) 
+      } as UserProfile));
     } catch (error) {
       console.error("Error fetching friends:", error);
       return [];
@@ -350,11 +380,13 @@ class FirebaseDB {
 
   async addToWishlist(activityId: string) {
     const userId = this.getCurrentUserId();
+    if (!userId) return;
     await updateDoc(doc(firestore, 'users', userId), { wishlist: arrayUnion(activityId) });
   }
 
   async removeFromWishlist(activityId: string) {
     const userId = this.getCurrentUserId();
+    if (!userId) return;
     await updateDoc(doc(firestore, 'users', userId), { wishlist: arrayRemove(activityId) });
   }
 }
