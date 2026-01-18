@@ -9,7 +9,8 @@ interface NotificationsContextType {
   unreadCount: number;
   markAsRead: (id: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
-  hasNotifications: (type: 'like' | 'comment' | 'message' | 'friend_request' | 'event') => boolean;
+  // Fix: changed 'friend_request' to 'follow' to match the Notification type definition in types.ts
+  hasNotifications: (type: 'like' | 'comment' | 'message' | 'follow' | 'event') => boolean;
 }
 
 const NotificationsContext = createContext<NotificationsContextType | undefined>(undefined);
@@ -59,7 +60,8 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const hasNotifications = (type: 'like' | 'comment' | 'message' | 'friend_request' | 'event') => {
+  // Fix: changed 'friend_request' to 'follow' to match the Notification type definition in types.ts
+  const hasNotifications = (type: 'like' | 'comment' | 'message' | 'follow' | 'event') => {
     return notifications.some(n => !n.read && n.type === type);
   };
 

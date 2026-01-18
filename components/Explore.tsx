@@ -59,7 +59,7 @@ const getCategoryIcon = (category: string, size: number = 16, active: boolean = 
     return <Dumbbell size={size} className="text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]" style={{ opacity }} />;
   }
   if (lowerCat.includes('nightlife')) {
-    return <Music size={size} className="text-violet-400 drop-shadow-[0_0_8px_rgba(167,139,250,0.8)]" style={{ opacity }} />;
+    return <Music size={size} className="text-rose-400 drop-shadow-[0_0_8px_rgba(251,113,133,0.8)]" style={{ opacity }} />;
   }
   if (lowerCat.includes('drinking') || lowerCat === 'drinking' || lowerCat.includes('beer')) {
     return <Beer size={size} className="text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.8)]" style={{ opacity }} />;
@@ -68,7 +68,7 @@ const getCategoryIcon = (category: string, size: number = 16, active: boolean = 
     return <Martini size={size} className="text-rose-400 drop-shadow-[0_0_8px_rgba(251,113,133,0.8)]" style={{ opacity }} />;
   }
   if (lowerCat.includes('culture') || lowerCat.includes('art') || lowerCat.includes('museum')) {
-    return <Palette size={size} className="text-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.8)]" style={{ opacity }} />;
+    return <Palette size={size} className="text-purple-400 drop-shadow-[0_0_8px_rgba(167,139,250,0.8)]" style={{ opacity }} />;
   }
   if (lowerCat.includes('nature') || lowerCat.includes('outdoor') || lowerCat.includes('park')) {
     return <Trees size={size} className="text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.8)]" style={{ opacity }} />;
@@ -89,7 +89,7 @@ const createNeonIcon = (category: string) => {
     color = '#22d3ee';
     iconPath = '<path d="M6 18h12M12 2v4M6 8l12 0M12 18v4M6 16l12 0"/>';
   } else if (lowerCat.includes('nightlife')) {
-    color = '#a78bfa';
+    color = '#f43f5e';
     iconPath = '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>';
   } else if (lowerCat.includes('drinking') || lowerCat.includes('beer')) {
     color = '#f59e0b';
@@ -98,7 +98,7 @@ const createNeonIcon = (category: string) => {
     color = '#34d399';
     iconPath = '<path d="M12 2l4 10H8l4-10zm0 6l4 10H8l4-10zm0 6l4 10H8l4-10zM12 22v-2"/>';
   } else if (lowerCat.includes('culture') || lowerCat.includes('art')) {
-    color = '#818cf8';
+    color = '#a78bfa';
     iconPath = '<path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.5-.6 1.5-1.5 0-.4-.1-.8-.4-1.1-.3-.3-.5-.8-.5-1.3 0-1 1-1.5 2.5-1.5H19c1.7 0 3-1.3 3-3 0-5.3-4.5-9.7-10-9.7z"/>';
   }
 
@@ -138,7 +138,7 @@ const ActivityDetailModal: React.FC<{
           <img src={activity.imageUrl || FALLBACK_IMAGE} className="w-full h-full object-cover" alt={activity.name} />
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
           <div className="absolute top-6 left-6">
-            <div className="bg-slate-900/40 backdrop-blur-md p-3 rounded-2xl border border-white/20 shadow-xl">{getCategoryIcon(activity.category, 24)}</div>
+            <div className="bg-white/30 backdrop-blur-md p-3 rounded-2xl border border-white/20 shadow-xl">{getCategoryIcon(activity.category, 24)}</div>
           </div>
           <button onClick={onClose} className="absolute top-6 right-6 p-3 bg-white/20 backdrop-blur-md hover:bg-white/40 text-white rounded-full transition-all border border-white/20"><X size={20} /></button>
           <div className="absolute bottom-6 left-8 right-8 text-white">
@@ -153,7 +153,7 @@ const ActivityDetailModal: React.FC<{
           <div className="space-y-8">
             <div className="flex flex-wrap items-center gap-4 border-b border-slate-50 pb-6">
               <div className="flex items-center gap-1.5 text-indigo-600 text-xs font-black uppercase tracking-widest"><MapPin size={14} /> Munich, Germany</div>
-              <div className="px-3 py-1 bg-slate-50 rounded-full text-[9px] font-black text-slate-400 uppercase tracking-widest">{activity.category}</div>
+              <div className="px-3 py-1 bg-indigo-50 rounded-full text-[9px] font-black text-indigo-600 uppercase tracking-widest">{activity.category}</div>
             </div>
             <div className="space-y-4">
               <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">The Vibe</h4>
@@ -263,20 +263,20 @@ const Explore: React.FC<ExploreProps> = ({ onWishlistUpdate }) => {
     <div className="p-6 pb-24 space-y-6 animate-in fade-in duration-700">
       <header className="flex items-end justify-between">
         <div>
-          <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] mb-1">Explore Munich</p>
+          <p className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.3em] mb-1">Explore Munich</p>
           <h2 className="text-4xl font-black text-slate-900 italic tracking-tighter uppercase leading-none">What's Next?</h2>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => setViewMode(viewMode === 'grid' ? 'map' : 'grid')} className={`p-3 rounded-2xl border transition-all ${viewMode === 'map' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-400'}`}>{viewMode === 'grid' ? <MapIcon size={20} /> : <LayoutGrid size={20} />}</button>
-          <button onClick={() => setShowFilters(!showFilters)} className={`p-3 rounded-2xl border transition-all ${showFilters ? 'bg-indigo-600 text-white' : 'bg-white text-slate-400'}`}>{showFilters ? <X size={20} /> : <Filter size={20} />}</button>
+          <button onClick={() => setViewMode(viewMode === 'grid' ? 'map' : 'grid')} className={`p-3 rounded-2xl border transition-all ${viewMode === 'map' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-400 border-slate-100'}`}>{viewMode === 'grid' ? <MapIcon size={20} /> : <LayoutGrid size={20} />}</button>
+          <button onClick={() => setShowFilters(!showFilters)} className={`p-3 rounded-2xl border transition-all ${showFilters ? 'bg-indigo-600 text-white' : 'bg-white text-slate-400 border-slate-100'}`}>{showFilters ? <X size={20} /> : <Filter size={20} />}</button>
         </div>
       </header>
 
       {showFilters && (
         <div className="flex gap-4 flex-wrap pb-4 pt-2 overflow-x-hidden animate-in slide-in-from-top-4 duration-300">
-          <button onClick={() => setSelectedCategory(null)} className={`px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest ${selectedCategory === null ? 'bg-slate-900 text-white' : 'bg-white text-slate-400 border'}`}>All Spots</button>
+          <button onClick={() => setSelectedCategory(null)} className={`px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest ${selectedCategory === null ? 'bg-slate-900 text-white' : 'bg-white text-slate-400 border border-slate-100'}`}>All Spots</button>
           {CATEGORIES.map(cat => (
-            <button key={cat} onClick={() => setSelectedCategory(cat)} className={`flex items-center gap-3 px-5 py-3 rounded-2xl transition-all border ${selectedCategory === cat ? 'border-indigo-500 text-indigo-600' : 'bg-white text-slate-400'}`}>
+            <button key={cat} onClick={() => setSelectedCategory(cat)} className={`flex items-center gap-3 px-5 py-3 rounded-2xl transition-all border ${selectedCategory === cat ? 'border-indigo-300 text-indigo-600 bg-indigo-50/50' : 'bg-white text-slate-400 border-slate-100'}`}>
               {getCategoryIcon(cat, 18, selectedCategory === cat)} <span className="text-[10px] font-black uppercase tracking-widest">{cat}</span>
             </button>
           ))}
@@ -293,7 +293,7 @@ const Explore: React.FC<ExploreProps> = ({ onWishlistUpdate }) => {
             <>
               {recommended.length > 0 && (
                 <section className="space-y-6">
-                  <div className="flex items-center gap-3"><div className="bg-indigo-600 p-1.5 rounded-lg text-white"><Sparkles size={16} fill="currentColor" /></div><h3 className="font-black text-slate-800 uppercase tracking-widest text-xs italic">Personalized for you</h3></div>
+                  <div className="flex items-center gap-3"><div className="bg-indigo-600 p-1.5 rounded-lg text-white shadow-lg shadow-indigo-100"><Sparkles size={16} fill="currentColor" /></div><h3 className="font-black text-slate-800 uppercase tracking-widest text-xs italic">Personalized for you</h3></div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">{recommended.map(a => <ActivityCard key={a.id} activity={a} groups={groups} onWishlist={() => handleWishlist(a.id)} onShare={(gid) => handleShareToGroup(a.id, gid)} onClick={() => setSelectedActivity(a)} />)}</div>
                 </section>
               )}
@@ -336,15 +336,15 @@ const ActivityCard: React.FC<{ activity: Activity; groups: ChatGroup[]; onWishli
       <div className="relative aspect-video overflow-hidden bg-slate-100">
         <img src={activity.imageUrl || FALLBACK_IMAGE} alt={activity.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/5 to-transparent opacity-80"></div>
-        <div className="absolute top-4 left-4 z-20"><div className="bg-slate-900/40 backdrop-blur-md p-2.5 rounded-xl border border-white/10 flex items-center justify-center shadow-lg">{getCategoryIcon(category, 20)}</div></div>
+        <div className="absolute top-4 left-4 z-20"><div className="bg-white/20 backdrop-blur-md p-2.5 rounded-xl border border-white/10 flex items-center justify-center shadow-lg">{getCategoryIcon(category, 20)}</div></div>
         <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
-          <button onClick={(e) => { e.stopPropagation(); onWishlist(); }} className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all backdrop-blur-xl border border-white/20 ${isWishlisted ? 'bg-rose-50 text-white border-rose-400' : 'bg-white/20 text-white hover:bg-white hover:text-slate-900'}`}><Heart size={16} fill={isWishlisted ? 'currentColor' : 'none'} /></button>
+          <button onClick={(e) => { e.stopPropagation(); onWishlist(); }} className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all backdrop-blur-xl border border-white/20 ${isWishlisted ? 'bg-rose-500 text-white border-rose-400' : 'bg-white/20 text-white hover:bg-white hover:text-slate-900'}`}><Heart size={16} fill={isWishlisted ? 'currentColor' : 'none'} /></button>
           <div className="relative" ref={dropdownRef}>
             <button onClick={(e) => { e.stopPropagation(); setShowGroupDropdown(!showGroupDropdown); }} className="w-10 h-10 flex items-center justify-center bg-white/20 backdrop-blur-xl border border-white/20 rounded-xl text-white hover:bg-white hover:text-slate-900 transition-all"><Send size={16} /></button>
             {showGroupDropdown && (
               <div className="absolute top-full right-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-20 min-w-[200px] animate-in slide-in-from-top-2">
-                <button onClick={(e) => { e.stopPropagation(); onShare(null); setShowGroupDropdown(false); }} className="w-full px-4 py-3 text-left hover:bg-slate-50 transition-colors text-sm font-medium text-slate-700">All Squads</button>
-                {groups.map(g => <button key={g.id} onClick={(e) => { e.stopPropagation(); onShare(g.id); setShowGroupDropdown(false); }} className="w-full px-4 py-3 text-left hover:bg-slate-50 transition-colors text-sm font-medium text-slate-700 border-t border-slate-100">{g.name}</button>)}
+                <button onClick={(e) => { e.stopPropagation(); onShare(null); setShowGroupDropdown(false); }} className="w-full px-4 py-3 text-left hover:bg-indigo-50 transition-colors text-sm font-medium text-slate-700">All Squads</button>
+                {groups.map(g => <button key={g.id} onClick={(e) => { e.stopPropagation(); onShare(g.id); setShowGroupDropdown(false); }} className="w-full px-4 py-3 text-left hover:bg-indigo-50 transition-colors text-sm font-medium text-slate-700 border-t border-slate-100">{g.name}</button>)}
               </div>
             )}
           </div>
@@ -357,7 +357,7 @@ const ActivityCard: React.FC<{ activity: Activity; groups: ChatGroup[]; onWishli
       <div className="p-5 flex-1 flex flex-col justify-center">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-semibold"><MapPin size={12} className="text-indigo-400" /> {renderLocationText(activity.location)}</div>
-          <div className="px-2 py-1 bg-slate-50 rounded-lg border border-slate-100 flex items-center gap-1"><Info size={10} className="text-indigo-300" /><span className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">Details</span></div>
+          <div className="px-2 py-1 bg-slate-50 rounded-lg border border-slate-100 flex items-center gap-1"><Info size={10} className="text-indigo-400" /><span className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">Details</span></div>
         </div>
       </div>
     </div>

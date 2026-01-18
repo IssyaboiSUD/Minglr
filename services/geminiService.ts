@@ -2,16 +2,15 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Activity, UserProfile } from "../types";
 
-// Fallback to empty string to prevent constructor crash
-const apiKey = process.env.API_KEY || "";
-const ai = new GoogleGenAI({ apiKey });
-
 /**
  * AI optimizes the order and selection of activities already in the database
  * based on the user's explicit preferences and wishlist history.
  */
 export async function getPersonalizedRanking(user: UserProfile, allActivities: Activity[]): Promise<string[]> {
-  if (!apiKey) {
+  // Always use {apiKey: process.env.API_KEY} for initialization as per guidelines
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+  if (!process.env.API_KEY) {
     console.warn("Gemini API Key is missing. Skipping personalized ranking.");
     return allActivities.slice(0, 4).map(a => a.id);
   }
@@ -26,6 +25,7 @@ export async function getPersonalizedRanking(user: UserProfile, allActivities: A
       Return ONLY a JSON array of strings containing the IDs.
     `;
 
+    // ai.models.generateContent is used correctly for text tasks
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: prompt,
@@ -38,6 +38,7 @@ export async function getPersonalizedRanking(user: UserProfile, allActivities: A
       }
     });
 
+    // Directly access the text property as per extracting text guidelines (do not use .text())
     return JSON.parse(response.text || "[]");
   } catch (error) {
     console.error("Personalization Error:", error);
