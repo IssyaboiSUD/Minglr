@@ -5,10 +5,26 @@ import { Activity, UserProfile } from "../types";
 /**
  * AI optimizes the order and selection of activities already in the database
  * based on the user's explicit preferences and wishlist history.
+ * 
+ * Includes session caching to prevent redundant API calls and quota exhaustion.
  */
 export async function getPersonalizedRanking(user: UserProfile, allActivities: Activity[]): Promise<string[]> {
-  // Always use {apiKey: process.env.API_KEY} for initialization as per guidelines
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+  // Safety check for empty data
+  if (allActivities.length === 0) return [];
+
+  // Implement Session Caching to prevent hitting 429 quota limits during navigation
+  const cacheKey = `minglr_ranking_${user.id}_${allActivities.length}_${user.preferences.join('_')}`;
+  const cachedData = sessionStorage.getItem(cacheKey);
+  
+  if (cachedData) {
+    try {
+      return JSON.parse(cachedData);
+    } catch (e) {
+      sessionStorage.removeItem(cacheKey);
+    }
+  }
 
   if (!process.env.API_KEY) {
     console.warn("Gemini API Key is missing. Skipping personalized ranking.");
@@ -25,7 +41,6 @@ export async function getPersonalizedRanking(user: UserProfile, allActivities: A
       Return ONLY a JSON array of strings containing the IDs.
     `;
 
-    // ai.models.generateContent is used correctly for text tasks
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: prompt,
@@ -38,10 +53,25 @@ export async function getPersonalizedRanking(user: UserProfile, allActivities: A
       }
     });
 
-    // Directly access the text property as per extracting text guidelines (do not use .text())
-    return JSON.parse(response.text || "[]");
-  } catch (error) {
-    console.error("Personalization Error:", error);
+    const result = JSON.parse(response.text || "[]");
+    
+    // Validate result is a string array
+    if (Array.isArray(result) && result.length > 0) {
+      // Cache the result for the current session
+      sessionStorage.setItem(cacheKey, JSON.stringify(result));
+      return result;
+    }
+    
+    return allActivities.slice(0, 4).map(a => a.id);
+  } catch (error: any) {
+    // Check for quota errors (429) specifically
+    if (error?.message?.includes('429') || error?.status === 'RESOURCE_EXHAUSTED') {
+      console.warn("Gemini API quota exceeded (429). Falling back to default ranking.");
+    } else {
+      console.error("Personalization Error:", error);
+    }
+    
+    // Return a default slice instead of throwing to keep the UI functional
     return allActivities.slice(0, 4).map(a => a.id);
   }
 }

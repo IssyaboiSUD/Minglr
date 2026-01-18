@@ -67,8 +67,6 @@ class FirebaseDB {
       return snapshot.docs.map(doc => {
         const data = doc.data() as any;
         const imageUrl = data.imageUrl || data.photoUrl || INITIAL_ACTIVITIES.find(a => a.id === doc.id)?.imageUrl || '';
-        
-        // Priority for category: 1. Firestore 'category' field, 2. Firestore 'type' field, 3. Mock data fallback, 4. Default 'Culture'
         let category = data.category || data.type;
         if (!category) {
           const mock = INITIAL_ACTIVITIES.find(a => a.id === doc.id);
@@ -88,7 +86,21 @@ class FirebaseDB {
     }
   }
 
-  // --- FOLLOWERS / FOLLOWING SYSTEM ---
+  // --- USER DATA ---
+
+  async getUserById(userId: string): Promise<UserProfile | null> {
+    if (!userId) return null;
+    try {
+      const userDoc = doc(firestore, 'users', userId);
+      const snap = await getDoc(userDoc);
+      if (snap.exists()) {
+        return { id: snap.id, ...snap.data() } as UserProfile;
+      }
+    } catch (error) {
+      console.error("Error fetching user by ID:", error);
+    }
+    return null;
+  }
 
   async searchUsers(searchTerm: string): Promise<UserProfile[]> {
     const userId = this.getCurrentUserId();
@@ -109,6 +121,30 @@ class FirebaseDB {
         .filter(u => u.id !== userId);
     } catch (error) {
       console.error("Search error:", error);
+      return [];
+    }
+  }
+
+  async getRecommendedUsers(): Promise<UserProfile[]> {
+    const userId = this.getCurrentUserId();
+    if (!userId) return [];
+
+    try {
+      const usersCol = collection(firestore, 'users');
+      const q = query(usersCol, limit(30));
+      const snapshot = await getDocs(q);
+      
+      return snapshot.docs
+        .map(doc => ({ 
+          id: doc.id, 
+          following: [],
+          followers: [],
+          ...(doc.data() as any) 
+        } as UserProfile))
+        .filter(u => u.id !== userId && !this.currentUser?.following?.includes(u.id))
+        .slice(0, 5);
+    } catch (error) {
+      console.error("Error fetching recommended users:", error);
       return [];
     }
   }
@@ -194,7 +230,7 @@ class FirebaseDB {
     }
   }
 
-  // --- CHAT & MESSAGING ---
+  // --- MESSAGING ---
 
   async createGroup(name: string, memberIds: string[]) {
     const userId = this.getCurrentUserId();
@@ -325,6 +361,23 @@ class FirebaseDB {
     });
   }
 
+  async getUserPosts(userId: string): Promise<Post[]> {
+    try {
+      // Simplified query to avoid composite index requirement
+      const q = query(collection(firestore, 'posts'), where('userId', '==', userId));
+      const snapshot = await getDocs(q);
+      // Sort in-memory instead of Firestore level
+      return snapshot.docs.map(doc => ({
+        ...doc.data(),
+        id: doc.id,
+        timestamp: (doc.data() as any).timestamp?.toDate() || new Date()
+      } as Post)).sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    } catch (error) {
+      console.error("Error fetching user posts:", error);
+      return [];
+    }
+  }
+
   async addPost(post: Omit<Post, 'id'>) {
     await addDoc(collection(firestore, 'posts'), {
       ...post,
@@ -361,7 +414,7 @@ class FirebaseDB {
     });
   }
 
-  // --- USER ---
+  // --- SYSTEM ---
 
   getUser() {
     return this.currentUser;

@@ -18,6 +18,7 @@ import NotificationsModal from './components/NotificationsModal';
 const AppContent: React.FC = () => {
   const { userProfile, loading } = useAuth();
   const [activeTab, setActiveTab] = useState<'explore' | 'chat' | 'feed' | 'calendar' | 'wishlist' | 'friends' | 'profile'>('explore');
+  const [viewedUserId, setViewedUserId] = useState<string | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [showNotifications, setShowNotifications] = useState(false);
   const [logoError, setLogoError] = useState(false);
@@ -35,6 +36,16 @@ const AppContent: React.FC = () => {
     if (currentUser) {
       setUser({ ...currentUser });
     }
+  };
+
+  const handleNavigateToProfile = (userId: string) => {
+    setViewedUserId(userId);
+    setActiveTab('profile');
+  };
+
+  const handleMyProfile = () => {
+    setViewedUserId(null);
+    setActiveTab('profile');
   };
 
   if (loading) {
@@ -103,7 +114,7 @@ const AppContent: React.FC = () => {
             onClick={() => setActiveTab('wishlist')}
             className={`flex items-center gap-2 px-3 py-2 rounded-full transition-all ${
               activeTab === 'wishlist' 
-                ? 'bg-rose-500 text-white shadow-lg shadow-rose-200' 
+                ? 'bg-rose-50 text-white shadow-lg shadow-rose-200' 
                 : 'bg-rose-50 hover:bg-rose-100 text-rose-600'
             }`}
           >
@@ -111,8 +122,8 @@ const AppContent: React.FC = () => {
             <span className="text-xs font-black tracking-tighter">{user.wishlist.length}</span>
           </button>
           <button 
-            onClick={() => setActiveTab('profile')}
-            className={`relative group transition-transform active:scale-95 ml-1 ${activeTab === 'profile' ? 'ring-2 ring-indigo-500 rounded-full' : ''}`}
+            onClick={handleMyProfile}
+            className={`relative group transition-transform active:scale-95 ml-1 ${activeTab === 'profile' && !viewedUserId ? 'ring-2 ring-indigo-500 rounded-full' : ''}`}
           >
             <img 
               src={user.avatar || `https://i.pravatar.cc/150?u=${user.id}`} 
@@ -129,35 +140,33 @@ const AppContent: React.FC = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-hidden relative">
-        <div className="h-full overflow-y-auto px-6 py-6 scroll-smooth">
-          <div className="max-w-5xl mx-auto pb-32">
+        <div className="h-full overflow-y-auto px-4 md:px-6 py-6 scroll-smooth">
+          <div className={`${activeTab === 'feed' ? 'max-w-7xl' : 'max-w-5xl'} mx-auto pb-32 transition-all duration-500`}>
             {activeTab === 'explore' && <Explore onWishlistUpdate={refreshUser} />}
             {activeTab === 'chat' && <Chat />}
-            {activeTab === 'feed' && <Feed onWishlistUpdate={refreshUser} />}
+            {activeTab === 'feed' && <Feed onWishlistUpdate={refreshUser} onNavigateToProfile={handleNavigateToProfile} />}
             {activeTab === 'calendar' && <GroupCalendar />}
             {activeTab === 'wishlist' && <Wishlist onWishlistUpdate={refreshUser} />}
             {activeTab === 'friends' && <Friends onUpdate={refreshUser} />}
-            {activeTab === 'profile' && <Profile user={user} onUpdate={refreshUser} />}
+            {activeTab === 'profile' && <Profile userId={viewedUserId || user.id} isOwnProfile={!viewedUserId || viewedUserId === user.id} onUpdate={refreshUser} />}
           </div>
         </div>
       </main>
 
-      {/* Persistent Horizontal Navigation Pill - Red/Blue/White Scheme */}
+      {/* Persistent Horizontal Navigation Pill - Enhanced for Mobile */}
       <nav 
         onMouseEnter={() => setIsNavHovered(true)}
         onMouseLeave={() => setIsNavHovered(false)}
         className={`fixed left-6 bottom-8 z-[100] transition-all duration-700 ease-[cubic-bezier(0.2,0,0,1)] 
           bg-white/95 backdrop-blur-3xl rounded-[2.5rem] p-1.5 flex flex-row items-center gap-1.5 shadow-[0_20px_50px_rgba(79,70,229,0.15)] border border-indigo-100
-          ${isNavHovered ? 'w-auto max-w-[90vw] px-2.5' : 'w-14 h-14'}`}
+          ${isNavHovered ? 'w-auto max-w-[calc(100vw-3rem)] px-2.5' : 'w-14 h-14'}`}
       >
         <div className="flex flex-row items-center relative w-full h-full overflow-hidden">
-          {/* Collapsed State: Red Paper Airplane */}
           <div className={`absolute inset-0 flex items-center justify-center transition-all duration-500 pointer-events-none
             ${isNavHovered ? 'opacity-0 scale-50 rotate-12' : 'opacity-100 scale-100 rotate-0'}`}>
             <Send size={22} className="text-rose-500 fill-rose-50" />
           </div>
 
-          {/* Expanded State: Menu Items with Blue active state and Red inactive state */}
           <div className={`flex flex-row gap-1.5 items-center transition-all duration-700
             ${isNavHovered ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10 pointer-events-none'}`}>
             <NavButton 
@@ -230,13 +239,15 @@ interface NavButtonProps {
 const NavButton: React.FC<NavButtonProps> = ({ active, onClick, icon, label, isNavHovered, hasNotification = false }) => (
   <button 
     onClick={onClick}
-    className={`relative flex items-center gap-3 transition-all duration-500 min-w-max group/btn h-[44px] px-3.5 rounded-2xl
-      ${active ? 'text-white bg-indigo-600 shadow-lg shadow-indigo-200' : 'text-rose-500 hover:text-indigo-600 hover:bg-indigo-50'}`}
+    className={`relative flex items-center transition-all duration-500 min-w-max group/btn h-[44px] rounded-2xl
+      ${active ? 'text-white bg-indigo-600 shadow-lg shadow-indigo-200' : 'text-rose-500 hover:text-indigo-600 hover:bg-indigo-50'}
+      ${isNavHovered ? 'px-3.5 gap-0 md:gap-3' : 'px-0 justify-center w-full'}
+    `}
   >
     <div className={`shrink-0 transition-transform duration-500 ${isNavHovered ? 'group-hover/btn:scale-110' : ''}`}>
       {icon}
     </div>
-    <span className={`text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 whitespace-nowrap
+    <span className={`text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 whitespace-nowrap hidden md:inline-block
       ${isNavHovered ? 'opacity-100 translate-x-0 w-auto' : 'opacity-0 -translate-x-4 w-0'}`}>
       {label}
     </span>
